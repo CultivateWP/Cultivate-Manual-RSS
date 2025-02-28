@@ -5,7 +5,7 @@
  * Description: Build RSS feeds. Posts are sorted by the date added to a category, not publish date.
  * Author:      CultivateWP
  * Author URI:  https://cultivatewp.com/
- * Version:     1.1.0
+ * Version:     1.2.0
  * Text Domain: cultivate-manual-rss
  *
  * Cultivate Manual RSS is free software: you can redistribute it and/or modify
@@ -63,7 +63,7 @@ function register_taxonomy() {
 	);
 	\register_taxonomy( 'cultivate_rss', apply_filters( 'cultivate_manual_rss_post_types', [ 'post' ] ), apply_filters( 'cultivate_manual_rss_args', $args ) );
 }
-add_action( 'init', __NAMESPACE__ . '\register_taxonomy' );
+add_action( 'init', __NAMESPACE__ . '\register_taxonomy', 4 );
 
 /**
  * Activation hook
@@ -120,6 +120,43 @@ function archive_query( $query ) {
 	}
 }
 add_action( 'pre_get_posts', __NAMESPACE__ . '\archive_query', 20 );
+
+/**
+ * Post Listing Settings
+ */
+function post_listing_settings( $settings ) {
+	$post_types = apply_filters( 'cultivate_manual_rss_post_types', [ 'post' ] );
+	$tax = [
+		'tax' => 'cultivate_rss',
+		'field' => 'cultivate_rss',
+		'label' => 'RSS Category'
+	];
+
+	foreach( $post_types as $post_type ) {
+		if ( isset( $settings['post_types'][ $post_type ] ) ) {
+			$settings['post_types'][ $post_type ][] = $tax;
+		}
+	}
+	return $settings;
+}
+add_filter( 'cultivate_pro/post_listing/settings', __NAMESPACE__ . '\post_listing_settings' );
+
+/**
+ * Post Listing query
+ */
+function post_listing_query( $args ) {
+
+	if ( ! empty( $args['query_args']['tax_query'] )  && 1 === count( $args['query_args']['tax_query'] ) && 'cultivate_rss' === $args['query_args']['tax_query'][0]['taxonomy'] && 1 === count( $args['query_args']['tax_query'][0]['terms'] ) ) {
+		$term_id = $args['query_args']['tax_query'][0]['terms'][0];
+		$term = get_term_by( 'term_taxonomy_id', $term_id, 'rss_category' );
+		if ( ! empty( $term ) && ! is_wp_error( $term ) ) {
+			$args['query_args']['orderby'] = 'meta_value';
+			$args['query_args']['meta_key'] = $term->slug . '_datetime';
+		}
+	}
+	return $args;
+}
+add_filter( 'cultivate_pro/post_listing/args', __NAMESPACE__ . '\post_listing_query' );
 
 /**
  * Updater
