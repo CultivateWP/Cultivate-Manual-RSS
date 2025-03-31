@@ -148,7 +148,7 @@ function post_listing_query( $args ) {
 
 	if ( ! empty( $args['query_args']['tax_query'] )  && 1 === count( $args['query_args']['tax_query'] ) && 'cultivate_rss' === $args['query_args']['tax_query'][0]['taxonomy'] && 1 === count( $args['query_args']['tax_query'][0]['terms'] ) ) {
 		$term_id = $args['query_args']['tax_query'][0]['terms'][0];
-		$term = get_term_by( 'term_taxonomy_id', $term_id, 'rss_category' );
+		$term = get_term_by( 'term_id', $term_id, 'cultivate_rss' );
 		if ( ! empty( $term ) && ! is_wp_error( $term ) ) {
 			$args['query_args']['orderby'] = 'meta_value';
 			$args['query_args']['meta_key'] = $term->slug . '_datetime';
