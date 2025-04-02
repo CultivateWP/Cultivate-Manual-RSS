@@ -159,6 +159,23 @@ function post_listing_query( $args ) {
 add_filter( 'cultivate_pro/post_listing/args', __NAMESPACE__ . '\post_listing_query' );
 
 /**
+ * RSS Published Date
+ */
+function rss_published_date( $time ) {
+	if ( ! ( is_tax( 'cultivate_rss' ) && is_feed() ) ) {
+		return $time;
+	}
+
+	$custom_time = get_post_meta( get_the_ID(), get_queried_object()->slug . '_datetime', true );
+	if ( ! empty( $custom_time ) ) {
+		return $custom_time;
+	}
+
+	return $time;
+}
+add_filter( 'get_post_time', __NAMESPACE__ . '\rss_published_date' );
+
+/**
  * Updater
  */
 function updater() {
